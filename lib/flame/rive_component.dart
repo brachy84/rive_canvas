@@ -2,6 +2,7 @@ import 'package:flame/components/component.dart';
 import 'package:flame/components/mixins/resizable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:rive/rive.dart';
 
 import 'package:rive_canvas/rive_canvas.dart';
@@ -10,8 +11,7 @@ import 'package:rive_canvas/rive_canvas.dart';
 /// make sure to to call super... when overriding a method
 class RiveComponent extends PositionComponent with Resizable {
   /// The file to draw on the canvas
-  /// currently only supports [riveFile.mainArtboard]
-  final RiveFile riveFile;
+  RiveFile riveFile;
 
   /// If this is non Null, this will be drawn instead of [riveFile.mainArtboard]
   final String artboardName;
@@ -38,15 +38,29 @@ class RiveComponent extends PositionComponent with Resizable {
   Artboard _artboard;
   final _pipelineOwner = RiveComponentPipelineOwner();
 
-  RiveComponent(
-      {@required this.riveFile,
-      this.artboardName,
+  RiveComponent(this.riveFile,
+      {this.artboardName,
       this.animationController,
       this.alignment = Alignment.center,
       this.fit = BoxFit.contain,
       this.autoAnimate = true}) {
     assert(riveFile != null && alignment != null && fit != null);
+    _init();
+  }
 
+  RiveComponent.fromPath(String filePath,
+      {this.artboardName,
+      this.animationController,
+      this.alignment = Alignment.center,
+      this.fit = BoxFit.contain,
+      this.autoAnimate = true}) {
+    rootBundle.load(filePath).then((data) {
+      riveFile = RiveFile()..import(data);
+      _init();
+    });
+  }
+
+  void _init() {
     // init artboard
     if (artboardName != null) {
       _artboard = riveFile.artboardByName(artboardName);
@@ -62,7 +76,7 @@ class RiveComponent extends PositionComponent with Resizable {
       alignment: alignment,
       fit: fit,
     );
-    _renderObject = riveWidget.renderObject();
+    _renderObject = riveWidget.createRenderObject(null);
     _riveCanvas = RiveCanvas(
       renderObject: _renderObject,
     );
@@ -72,6 +86,8 @@ class RiveComponent extends PositionComponent with Resizable {
       _artboard.addController(animationController);
     }
   }
+
+  bool get isLoaded => riveFile != null && _renderObject != null;
 
   bool isPlaying() => animationController?.isActive ?? false;
 
@@ -91,8 +107,9 @@ class RiveComponent extends PositionComponent with Resizable {
 
   @mustCallSuper
   @override
-  void onMount() {
+  void onMount() async {
     super.onMount();
+    if (isLoaded) await Future.delayed(Duration(milliseconds: 1));
     _renderObject.attach(_pipelineOwner);
     _artboard.advance(0);
     if (autoAnimate) {

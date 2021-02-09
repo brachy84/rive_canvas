@@ -13,13 +13,6 @@ import 'package:rive/src/rive_core/math/mat2d.dart';
 // ignore: implementation_imports
 import 'package:rive/src/rive_core/math/vec2d.dart';
 
-/// adding a method to [Canvas] for convenience
-extension CanvasExtension on Canvas {
-  void drawRive(RiveCanvas riveCanvas, Size size) {
-    riveCanvas.paint(this, size);
-  }
-}
-
 /// Use this as a painter in a [CustomPaint] Widget
 ///
 /// ! Note !
@@ -74,7 +67,7 @@ class RivePainter extends CustomPainter {
       alignment: alignment,
       fit: fit,
     );
-    _renderObject = riveWidget.renderObject();
+    _renderObject = riveWidget.createRenderObject(null);
     riveCanvas = RiveCanvas(
       renderObject: _renderObject,
     );
@@ -88,6 +81,13 @@ class RivePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (size == Size.zero) {
+      print('#####################################################');
+      print('# Warning: size on Custom Paint is Zero             #');
+      print('# Rive will not be visible                          #');
+      print('# Please provide a size to the CustomPaint widget   #');
+      print('#####################################################');
+    }
     canvas.drawRive(riveCanvas, size);
     if (paintHitBox) {
       canvas.drawRect(Rect.fromLTWH(0, 0, _artboard.width, _artboard.height),
@@ -99,9 +99,10 @@ class RivePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-extension RiveExtension on Rive {
-  RiveRenderObject renderObject() {
-    return createRenderObject(null);
+/// adding a method to [Canvas] for convenience
+extension CanvasExtension on Canvas {
+  void drawRive(RiveCanvas riveCanvas, Size size) {
+    riveCanvas.paint(this, size);
   }
 }
 

@@ -3,6 +3,7 @@ description: A package to make rive even more great
 version: 0.0.1
 author: "brachy84"
 #homepage:
+  
 environment:
   sdk: ">=2.7.0 <3.0.0"
   flutter: ">=1.17.0"
