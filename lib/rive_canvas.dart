@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:rive/rive.dart';
 // ignore: implementation_imports
 import 'package:rive/src/rive_core/math/aabb.dart';
@@ -19,8 +20,7 @@ import 'package:rive/src/rive_core/math/vec2d.dart';
 /// ! It is very important that you provide a size to the [CustomPaint] Widget
 class RivePainter extends CustomPainter {
   /// The file to draw on the canvas
-  /// currently only supports [riveFile.mainArtboard]
-  final RiveFile riveFile;
+  RiveFile riveFile;
 
   /// If this is non Null, this will be drawn instead of [riveFile.mainArtboard]
   final String artboardName;
@@ -30,7 +30,8 @@ class RivePainter extends CustomPainter {
   final RiveAnimationController animationController;
 
   /// Should a Box with half opacity be painted on top of the artboard
-  final bool paintHitBox;
+  /// ! not yet implemented
+  bool paintHitBox;
 
   /// The alignment of the artboard in the canvas
   final Alignment alignment;
@@ -45,15 +46,37 @@ class RivePainter extends CustomPainter {
   RiveCanvas riveCanvas;
   Artboard _artboard;
 
-  RivePainter(
-      {@required this.riveFile,
-      this.artboardName,
+  RivePainter(this.riveFile,
+      {this.artboardName,
       this.animationController,
-      this.paintHitBox,
-      this.alignment,
-      this.fit}) {
+      //this.paintHitBox = false,
+      this.alignment = Alignment.center,
+      this.fit = BoxFit.contain}) {
     assert(riveFile != null);
+    //assert(paintHitBox != null);
+    assert(alignment != null);
+    assert(fit != null);
+    _init();
+  }
 
+  /* // Not ready
+  RivePainter.fromPath(String path,
+      {this.artboardName,
+      this.animationController,
+      this.paintHitBox = true,
+      this.alignment = Alignment.center,
+      this.fit = BoxFit.contain}) {
+    assert(path != null);
+    assert(paintHitBox != null);
+    assert(alignment != null);
+    assert(fit != null);
+    rootBundle.load(path).then((data) {
+      riveFile = RiveFile()..import(data);
+      _init();
+    });
+  }*/
+
+  void _init() {
     if (artboardName != null) {
       _artboard = riveFile.artboardByName(artboardName);
       assert(
@@ -72,15 +95,20 @@ class RivePainter extends CustomPainter {
       renderObject: _renderObject,
     );
 
-    riveFile.mainArtboard.advance(0);
+    _artboard.advance(0);
     if (animationController != null) {
-      riveFile.mainArtboard.addController(animationController);
+      _artboard.addController(animationController);
       animationController.isActive = true;
     }
   }
 
+  bool loaded() => riveFile != null && _renderObject != null;
+
   @override
-  void paint(Canvas canvas, Size size) {
+  void paint(Canvas canvas, Size size) async {
+    while (!loaded()) {
+      await Future.delayed(Duration(milliseconds: 1));
+    }
     if (size == Size.zero) {
       print('#####################################################');
       print('# Warning: size on Custom Paint is Zero             #');
@@ -89,14 +117,23 @@ class RivePainter extends CustomPainter {
       print('#####################################################');
     }
     canvas.drawRive(riveCanvas, size);
-    if (paintHitBox) {
-      canvas.drawRect(Rect.fromLTWH(0, 0, _artboard.width, _artboard.height),
-          Paint()..color = Colors.blue.withOpacity(0.5));
-    }
+
+    //if (paintHitBox) {
+    //  canvas.drawRect(Rect.fromLTWH(0, 0, _artboard.width, _artboard.height),
+    //      Paint()..color = Colors.blue.withOpacity(0.5));
+    //}
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
+    if (oldDelegate is RivePainter) {
+      if (!oldDelegate.loaded() && loaded()) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
 
 /// adding a method to [Canvas] for convenience
@@ -123,6 +160,7 @@ class RiveCanvas {
   }
 
   void paint(Canvas c, Size size) {
+    assert(renderObject != null);
     final position = Offset.zero;
 
     final contentWidth = _bounds[2] - _bounds[0];

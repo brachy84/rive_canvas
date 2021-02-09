@@ -36,7 +36,7 @@ class RiveComponent extends PositionComponent with Resizable {
   RiveRenderObject _renderObject;
   RiveCanvas _riveCanvas;
   Artboard _artboard;
-  final _pipelineOwner = RiveComponentPipelineOwner();
+  final _pipelineOwner = _RiveComponentPipelineOwner();
 
   RiveComponent(this.riveFile,
       {this.artboardName,
@@ -87,7 +87,8 @@ class RiveComponent extends PositionComponent with Resizable {
     }
   }
 
-  bool get isLoaded => riveFile != null && _renderObject != null;
+  @override
+  bool loaded() => riveFile != null && _renderObject != null;
 
   bool isPlaying() => animationController?.isActive ?? false;
 
@@ -109,7 +110,9 @@ class RiveComponent extends PositionComponent with Resizable {
   @override
   void onMount() async {
     super.onMount();
-    if (isLoaded) await Future.delayed(Duration(milliseconds: 1));
+    while (!loaded()) {
+      await Future.delayed(Duration(milliseconds: 1));
+    }
     _renderObject.attach(_pipelineOwner);
     _artboard.advance(0);
     if (autoAnimate) {
@@ -128,6 +131,7 @@ class RiveComponent extends PositionComponent with Resizable {
   @override
   void update(double dt) {
     super.update(dt);
+    if (!loaded()) return;
     _renderObject.advance(dt);
   }
 
@@ -142,4 +146,4 @@ class RiveComponent extends PositionComponent with Resizable {
   }
 }
 
-class RiveComponentPipelineOwner extends PipelineOwner {}
+class _RiveComponentPipelineOwner extends PipelineOwner {}

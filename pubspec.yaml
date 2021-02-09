@@ -1,9 +1,9 @@
 name: rive_canvas
-description: A package to make rive even more great
-version: 0.0.1
-author: "brachy84"
-#homepage:
-  
+description: This package helps rendering Rives on a canvas directly. 
+  It also comes with a RiveComponent for the Flame game engine.
+version: 0.0.2
+homepage: 'https://www.brachy84.me'
+
 environment:
   sdk: ">=2.7.0 <3.0.0"
   flutter: ">=1.17.0"
