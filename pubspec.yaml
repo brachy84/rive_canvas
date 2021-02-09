@@ -1,0 +1,20 @@
+name: rive_canvas
+description: A package to make rive even more great
+version: 0.0.1
+author: "brachy84"
+#homepage:
+environment:
+  sdk: ">=2.7.0 <3.0.0"
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flame: ^0.29.0
+  rive: ^0.6.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter: null
