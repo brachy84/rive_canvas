@@ -1,4 +1,4 @@
-## [0.0.3] - 10th February 2021
+## [0.0.4] - 10th February 2021
 
 * updated License and README
 * reworked rive canvas and rive component
